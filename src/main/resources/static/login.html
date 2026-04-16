@@ -1,0 +1,13 @@
+<form action="/login" method="post">
+    <input type="hidden" name="hotel" id="hotel">
+
+    Username: <input name="username"><br>
+    Password: <input type="password" name="password"><br>
+
+    <button>Login</button>
+</form>
+
+<script>
+const p = new URLSearchParams(window.location.search);
+document.getElementById("hotel").value = p.get("hotel");
+</script>
