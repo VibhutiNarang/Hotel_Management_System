@@ -25,56 +25,56 @@ public class LoginController {
     }
 
     private static final String STYLE = """
-    <style>
-    body {
-        font-family: 'Segoe UI', sans-serif;
-        background: linear-gradient(135deg, #fff0f5, #ffe6f0);
-        margin: 0;
-    }
-    .container {
-        background: white;
-        padding: 30px;
-        border-radius: 15px;
-        width: 90%;
-        max-width: 1000px;
-        margin: 40px auto;
-        text-align:center;
-    }
-    .cards {
-        display:flex;
-        gap:20px;
-        flex-wrap:wrap;
-        justify-content:center;
-    }
-    .card {
-        padding:15px;
-        border-radius:10px;
-        background: white;
-        width:250px;
-        box-shadow:0 5px 15px rgba(0,0,0,0.1);
-    }
-    .card img {
-        width:100%;
-        border-radius:10px;
-    }
-    .btn {
-        padding:10px;
-        margin:5px;
-        border-radius:8px;
-        color:white;
-        text-decoration:none;
-        display:inline-block;
-    }
-    .btn-primary { background:#6f84f1; }
-    .btn-success { background:#28a745; }
-    .btn-danger { background:red; }
-    .btn-dark { background:black; }
-    .back-btn {
-        margin-top:20px;
-        display:inline-block;
-    }
-    </style>
-    """;
+            <style>
+            body {
+                font-family: 'Segoe UI', sans-serif;
+                background: linear-gradient(135deg, #fff0f5, #ffe6f0);
+                margin: 0;
+            }
+            .container {
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                width: 90%;
+                max-width: 1000px;
+                margin: 40px auto;
+                text-align:center;
+            }
+            .cards {
+                display:flex;
+                gap:20px;
+                flex-wrap:wrap;
+                justify-content:center;
+            }
+            .card {
+                padding:15px;
+                border-radius:10px;
+                background: white;
+                width:250px;
+                box-shadow:0 5px 15px rgba(0,0,0,0.1);
+            }
+            .card img {
+                width:100%;
+                border-radius:10px;
+            }
+            .btn {
+                padding:10px;
+                margin:5px;
+                border-radius:8px;
+                color:white;
+                text-decoration:none;
+                display:inline-block;
+            }
+            .btn-primary { background:#6f84f1; }
+            .btn-success { background:#28a745; }
+            .btn-danger { background:red; }
+            .btn-dark { background:black; }
+            .back-btn {
+                margin-top:20px;
+                display:inline-block;
+            }
+            </style>
+            """;
 
     // ===================== HOME =====================
     @GetMapping("/")
@@ -82,16 +82,20 @@ public class LoginController {
     public String index() {
         return "<html><head>" + STYLE + "</head><body>" +
 
-        "<div class='container'>" +
-        "<h1>🏨 Multi-Hotel Management System</h1>" +
+                "<div class='container'>" +
+                "<h1>🏨 Multi-Hotel Management System</h1>" +
 
-        "<div class='cards'>" +
+                "<div class='cards'>" +
 
-        hotelCard("Radisson", "https://images.trvl-media.com/lodging/2000000/1530000/1528800/1528788/6f594bec.jpg") +
-        hotelCard("Taj", "https://images.trvl-media.com/lodging/20000000/19460000/19458500/19458493/8cf0d468.jpg") +
-        hotelCard("Lalit", "https://www.thelalit.com/wp-content/uploads/2024/11/pool-mumbai-632x421.jpg") +
+                hotelCard("Radisson",
+                        "https://images.trvl-media.com/lodging/2000000/1530000/1528800/1528788/6f594bec.jpg")
+                +
+                hotelCard("Taj",
+                        "https://images.trvl-media.com/lodging/20000000/19460000/19458500/19458493/8cf0d468.jpg")
+                +
+                hotelCard("Lalit", "https://www.thelalit.com/wp-content/uploads/2024/11/pool-mumbai-632x421.jpg") +
 
-        "</div></div></body></html>";
+                "</div></div></body></html>";
     }
 
     private String hotelCard(String name, String img) {
@@ -115,9 +119,17 @@ public class LoginController {
 
         for (Room r : rooms) {
 
-            String img = r.getType().equalsIgnoreCase("Suite") ?
-                    "https://cf.bstatic.com/xdata/images/hotel/max1024x768/263912703.jpg" :
-                    "https://cf.bstatic.com/xdata/images/hotel/max1024x768/245123456.jpg";
+            String img;
+
+            if (r.getType().equalsIgnoreCase("Suite")) {
+                img = "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800";
+            } else if (r.getType().equalsIgnoreCase("Presidential")) {
+                img = "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800";
+            } else if (r.getType().equalsIgnoreCase("Deluxe")) {
+                img = "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800";
+            } else {
+                img = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800";
+            }
 
             html += "<div class='card'>" +
                     "<img src='" + img + "'>" +
@@ -147,44 +159,44 @@ public class LoginController {
 
         return "<html><head>" + STYLE + "</head><body><div class='container'>" +
 
-        "<h2>Guest Check-In</h2>" +
+                "<h2>Guest Check-In</h2>" +
 
-        "<form method='post' action='/customer/book'>" +
+                "<form method='post' action='/customer/book'>" +
 
-        "<input type='hidden' name='id' value='" + id + "'>" +
-        "<input type='hidden' name='hotel' value='" + hotel + "'>" +
+                "<input type='hidden' name='id' value='" + id + "'>" +
+                "<input type='hidden' name='hotel' value='" + hotel + "'>" +
 
-        "<input name='name' placeholder='Full Name'><br>" +
-        "<input name='phone' placeholder='Phone Number'><br>" +
-        "<input name='aadhaar' placeholder='Aadhaar Number'><br>" +
+                "<input name='name' placeholder='Full Name'><br>" +
+                "<input name='phone' placeholder='Phone Number'><br>" +
+                "<input name='aadhaar' placeholder='Aadhaar Number'><br>" +
 
-        "<select name='roomType'>" +
-        "<option>Suite</option>" +
-        "<option>Deluxe</option>" +
-        "</select><br>" +
+                "<select name='roomType'>" +
+                "<option>Suite</option>" +
+                "<option>Deluxe</option>" +
+                "</select><br>" +
 
-        "<label>Breakfast:</label>" +
-        "<select name='breakfast'>" +
-        "<option value='yes'>Yes</option>" +
-        "<option value='no'>No</option>" +
-        "</select><br><br>" +
+                "<label>Breakfast:</label>" +
+                "<select name='breakfast'>" +
+                "<option value='yes'>Yes</option>" +
+                "<option value='no'>No</option>" +
+                "</select><br><br>" +
 
-        "<button class='btn btn-success'>Confirm Booking</button>" +
-        "</form>" +
+                "<button class='btn btn-success'>Confirm Booking</button>" +
+                "</form>" +
 
-        "<a class='btn btn-dark back-btn' href='/customer/dashboard?hotel=" + hotel + "'>Back</a>" +
+                "<a class='btn btn-dark back-btn' href='/customer/dashboard?hotel=" + hotel + "'>Back</a>" +
 
-        "</div></body></html>";
+                "</div></body></html>";
     }
 
     @PostMapping("/customer/book")
     public RedirectView book(@RequestParam Long id,
-                             @RequestParam String hotel,
-                             @RequestParam String name,
-                             @RequestParam String phone,
-                             @RequestParam String aadhaar,
-                             @RequestParam String roomType,
-                             @RequestParam String breakfast) {
+            @RequestParam String hotel,
+            @RequestParam String name,
+            @RequestParam String phone,
+            @RequestParam String aadhaar,
+            @RequestParam String roomType,
+            @RequestParam String breakfast) {
 
         Room r = roomRepo.findById(id).orElse(null);
 
@@ -211,10 +223,12 @@ public class LoginController {
     public String viewBill(@RequestParam Long id) {
 
         Room r = roomRepo.findById(id).orElse(null);
-        if (r == null) return "No Bill Found";
+        if (r == null)
+            return "No Bill Found";
 
         double total = r.getPrice();
-        if (r.isBreakfast()) total += 500;
+        if (r.isBreakfast())
+            total += 500;
 
         return "<html><head>" + STYLE + "</head><body><div class='container'>" +
                 "<h2>Bill Details</h2>" +
@@ -225,8 +239,10 @@ public class LoginController {
                 "<h3>Total: ₹" + total + "</h3>" +
                 "<p>Status: " + r.getPaymentStatus() + "</p>" +
 
-                ("PENDING".equalsIgnoreCase(r.getPaymentStatus()) ?
-                        "<a class='btn btn-success' href='/customer/pay?id=" + r.getId() + "'>Pay Now</a>" : "") +
+                ("PENDING".equalsIgnoreCase(r.getPaymentStatus())
+                        ? "<a class='btn btn-success' href='/customer/pay?id=" + r.getId() + "'>Pay Now</a>"
+                        : "")
+                +
 
                 "<br><a class='btn btn-dark back-btn' href='/'>Back</a>" +
                 "</div></body></html>";
@@ -290,7 +306,7 @@ public class LoginController {
 
     @PostMapping("/customer/feedback")
     public RedirectView saveFeedback(@RequestParam Long id,
-                                     @RequestParam String feedback) {
+            @RequestParam String feedback) {
 
         Room r = roomRepo.findById(id).orElse(null);
         if (r != null) {
@@ -307,17 +323,17 @@ public class LoginController {
     public String facilities() {
         return "<html><head>" + STYLE + "</head><body><div class='container'>" +
 
-        "<h2>Hotel Facilities</h2>" +
-        "<ul>" +
-        "<li>🏊 Swimming Pool</li>" +
-        "<li>🍽️ Restaurant</li>" +
-        "<li>📶 Free WiFi</li>" +
-        "<li>🅿️ Parking</li>" +
-        "<li>💪 Gym</li>" +
-        "</ul>" +
+                "<h2>Hotel Facilities</h2>" +
+                "<ul>" +
+                "<li>🏊 Swimming Pool</li>" +
+                "<li>🍽️ Restaurant</li>" +
+                "<li>📶 Free WiFi</li>" +
+                "<li>🅿️ Parking</li>" +
+                "<li>💪 Gym</li>" +
+                "</ul>" +
 
-        "<a class='btn btn-dark back-btn' href='/'>Back</a>" +
-        "</div></body></html>";
+                "<a class='btn btn-dark back-btn' href='/'>Back</a>" +
+                "</div></body></html>";
     }
 
     // ===================== LOGIN =====================
@@ -325,24 +341,24 @@ public class LoginController {
     @ResponseBody
     public String loginPage(@RequestParam String hotel) {
         return "<html><head>" + STYLE + "</head><body><div class='container'>" +
-        "<h2>Admin Login - " + hotel + "</h2>" +
+                "<h2>Admin Login - " + hotel + "</h2>" +
 
-        "<form method='post' action='/login'>" +
-        "<input type='hidden' name='hotel' value='" + hotel + "'>" +
-        "<input name='username'><br>" +
-        "<input type='password' name='password'><br>" +
-        "<button class='btn btn-primary'>Login</button>" +
-        "</form>" +
+                "<form method='post' action='/login'>" +
+                "<input type='hidden' name='hotel' value='" + hotel + "'>" +
+                "<input name='username'><br>" +
+                "<input type='password' name='password'><br>" +
+                "<button class='btn btn-primary'>Login</button>" +
+                "</form>" +
 
-        "<a class='btn btn-dark back-btn' href='/'>Back</a>" +
-        "</div></body></html>";
+                "<a class='btn btn-dark back-btn' href='/'>Back</a>" +
+                "</div></body></html>";
     }
 
     @PostMapping("/login")
     public Object login(@RequestParam String hotel,
-                        @RequestParam String username,
-                        @RequestParam String password,
-                        HttpSession session) {
+            @RequestParam String username,
+            @RequestParam String password,
+            HttpSession session) {
 
         User user = repo.findByUsernameAndPasswordAndHotel(username, password, hotel);
 
@@ -360,7 +376,8 @@ public class LoginController {
     public String adminDash(HttpSession session) {
 
         User u = (User) session.getAttribute("user");
-        if (u == null) return "Access Denied";
+        if (u == null)
+            return "Access Denied";
 
         List<Room> rooms = roomRepo.findByHotel(u.getHotel());
 
@@ -378,8 +395,10 @@ public class LoginController {
                     r.getRoomNumber() + " - " + r.getType() +
                     " (" + status + ")" +
 
-                    (!r.isAvailable() ?
-                    " <a class='btn btn-danger' href='/admin/check-out?id=" + r.getId() + "'>Check-out</a>" : "") +
+                    (!r.isAvailable()
+                            ? " <a class='btn btn-danger' href='/admin/check-out?id=" + r.getId() + "'>Check-out</a>"
+                            : "")
+                    +
 
                     "</p>";
         }
@@ -402,22 +421,27 @@ public class LoginController {
     @ResponseBody
     public String form() {
         return "<html><head>" + STYLE + "</head><body><div class='container'>" +
-        "<form method='post' action='/admin/add-room'>" +
-        "<input name='roomNumber' placeholder='Room No'><br>" +
-        "<input name='type' placeholder='Type'><br>" +
-        "<button class='btn btn-success'>Add</button>" +
-        "</form>" +
-        "<a class='btn btn-dark back-btn' href='/admin/dashboard'>Back</a>" +
-        "</div></body></html>";
+                "<form method='post' action='/admin/add-room'>" +
+                "<input name='roomNumber' placeholder='Room No'><br>" +
+                "<select name='type'>\r\n" + //
+                "    <option>Suite</option>\r\n" + //
+                "    <option>Deluxe</option>\r\n" + //
+                "    <option>Presidential</option>\r\n" + //
+                "</select><br>" +
+                "<button class='btn btn-success'>Add</button>" +
+                "</form>" +
+                "<a class='btn btn-dark back-btn' href='/admin/dashboard'>Back</a>" +
+                "</div></body></html>";
     }
 
     @PostMapping("/admin/add-room")
     public RedirectView addRoom(@RequestParam String roomNumber,
-                               @RequestParam String type,
-                               HttpSession session) {
+            @RequestParam String type,
+            HttpSession session) {
 
         User u = (User) session.getAttribute("user");
-        if (u == null) return new RedirectView("/");
+        if (u == null)
+            return new RedirectView("/");
 
         Room r = new Room();
         r.setRoomNumber(roomNumber);
