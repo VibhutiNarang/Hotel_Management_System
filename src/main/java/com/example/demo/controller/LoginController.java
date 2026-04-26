@@ -109,48 +109,39 @@ public class LoginController {
 
     // ===================== CUSTOMER =====================
     @GetMapping("/customer/dashboard")
-    @ResponseBody
-    public String customer(@RequestParam String hotel) {
+@ResponseBody
+public String customer(@RequestParam String hotel) {
 
-        List<Room> rooms = roomRepo.findByHotelAndIsAvailableTrue(hotel);
+    List<Room> rooms = roomRepo.findByHotel(hotel);
 
-        String html = "<html><head>" + STYLE + "</head><body><div class='container'>";
-        html += "<h1>Welcome to " + hotel + "</h1><div class='cards'>";
+    String html = "<html><head>" + STYLE + "</head><body><div class='container'>";
+    html += "<h1>Welcome to " + hotel + "</h1><div class='cards'>";
 
-        for (Room r : rooms) {
+    for (Room r : rooms) {
 
-            String img;
+        String status = r.isAvailable() ? "Available ✅" : "Occupied ❌";
 
-            if (r.getType().equalsIgnoreCase("Suite")) {
-                img = "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800";
-            } else if (r.getType().equalsIgnoreCase("Presidential")) {
-                img = "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800";
-            } else if (r.getType().equalsIgnoreCase("Deluxe")) {
-                img = "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800";
-            } else {
-                img = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800";
-            }
+        html += "<div class='card'>" +
+                "<h3>Room " + r.getRoomNumber() + "</h3>" +
+                "<p>Type: " + r.getType() + "</p>" +
+                "<p>₹" + r.getPrice() + "</p>" +
+                "<p>Status: " + status + "</p>" +
 
-            html += "<div class='card'>" +
-                    "<img src='" + img + "'>" +
-                    "<h3>" + r.getType() + "</h3>" +
-                    "<p>₹" + r.getPrice() + "</p>" +
+                (r.isAvailable()
+                        ? "<a class='btn btn-success' href='/customer/book-form?id=" + r.getId() +
+                          "&hotel=" + hotel + "'>Book</a>"
+                        : "<a class='btn btn-danger' href='/customer/select-checkout?hotel=" + hotel + "'>Check-Out</a>")
+                +
 
-                    "<a class='btn btn-primary' href='/customer/facilities'>Facilities</a>" +
-                    "<a class='btn btn-success' href='/customer/book-form?id=" + r.getId() +
-                    "&hotel=" + hotel + "'>Book</a>" +
+                "<a class='btn btn-primary' href='/customer/facilities'>Facilities</a>" +
+                "<a class='btn btn-success' href='/customer/feedback?id=" + r.getId() + "'>Feedback</a>" +
 
-                    "<a class='btn btn-dark' href='/customer/bill?id=" + r.getId() + "'>Bill</a>" +
-                    "<a class='btn btn-primary' href='/customer/checkin?id=" + r.getId() + "'>Check-In</a>" +
-                    "<a class='btn btn-danger' href='/customer/checkout?id=" + r.getId() + "'>Check-Out</a>" +
-                    "<a class='btn btn-success' href='/customer/feedback?id=" + r.getId() + "'>Feedback</a>" +
-
-                    "</div>";
-        }
-
-        html += "</div><a class='btn btn-dark back-btn' href='/'>Back</a>";
-        return html + "</div></body></html>";
+                "</div>";
     }
+
+    html += "</div><a class='btn btn-dark back-btn' href='/'>Back</a>";
+    return html + "</div></body></html>";
+}
 
     // ===================== BOOK =====================
     @GetMapping("/customer/book-form")
@@ -189,32 +180,65 @@ public class LoginController {
                 "</div></body></html>";
     }
 
-    @PostMapping("/customer/book")
-    public RedirectView book(@RequestParam Long id,
-            @RequestParam String hotel,
-            @RequestParam String name,
-            @RequestParam String phone,
-            @RequestParam String aadhaar,
-            @RequestParam String roomType,
-            @RequestParam String breakfast) {
+   @PostMapping("/customer/book")
+public RedirectView book(@RequestParam Long id,
+        @RequestParam String hotel,
+        @RequestParam String name,
+        @RequestParam String phone,
+        @RequestParam String aadhaar,
+        @RequestParam String roomType,
+        @RequestParam String breakfast) {
+
+    Room r = roomRepo.findById(id).orElse(null);
+
+    if (r == null || !r.isAvailable()) {
+        return new RedirectView("/customer/dashboard?hotel=" + hotel);
+    }
+
+    r.setAvailable(false);
+    r.setCustomerName(name);
+    r.setPhone(phone);
+    r.setAadhaar(aadhaar);
+
+    r.setBreakfast("yes".equalsIgnoreCase(breakfast));
+    r.setPaymentStatus("PENDING");
+    r.setCheckedIn(false);
+    r.setCheckedOut(false);
+
+    roomRepo.save(r);
+
+    return new RedirectView("/customer/booking-success?id=" + id);
+}
+
+    @GetMapping("/customer/booking-success")
+    @ResponseBody
+    public String bookingSuccess(@RequestParam Long id) {
 
         Room r = roomRepo.findById(id).orElse(null);
 
-        if (r != null && r.isAvailable()) {
-            r.setAvailable(false);
-            r.setCustomerName(name);
-            r.setPhone(phone);
-            r.setAadhaar(aadhaar);
+        if (r == null)
+            return "Booking Failed";
 
-            r.setBreakfast("yes".equalsIgnoreCase(breakfast));
-            r.setPaymentStatus("PENDING");
-            r.setCheckedIn(false);
-            r.setCheckedOut(false);
+        return "<html><head>" + STYLE + "</head><body><div class='container'>" +
 
-            roomRepo.save(r);
-        }
+                "<h2 style='color:green;'>✅ Booking Successful!</h2>" +
+                "<h3>Room Allocated 🎉</h3>" +
 
-        return new RedirectView("/customer/dashboard?hotel=" + hotel);
+                "<p><b>Booking ID:</b> " + r.getId() + "</p>" +
+                "<p><b>Name:</b> " + (r.getCustomerName() != null ? r.getCustomerName() : "N/A") + "</p>" +
+                "<p><b>Hotel:</b> " + r.getHotel() + "</p>" +
+                "<p><b>Room Number:</b> " + r.getRoomNumber() + "</p>" +
+                "<p><b>Room Type:</b> " + r.getType() + "</p>" +
+                "<p><b>Price:</b> ₹" + r.getPrice() + "</p>" +
+                "<p><b>Breakfast:</b> " + (r.isBreakfast() ? "Included" : "Not Included") + "</p>" +
+
+                "<p><b>Status:</b> Confirmed ✅</p>" +
+
+                
+                "<br><a class='btn btn-success' href='/customer/dashboard?hotel=" + r.getHotel()
+                + "'>Go to Dashboard</a>" +
+
+                "</div></body></html>";
     }
 
     // ===================== BILL =====================
@@ -226,12 +250,20 @@ public class LoginController {
         if (r == null)
             return "No Bill Found";
 
+        // ✅ NEW CONDITION: Only after checkout
+        /*if (!r.isCheckedOut()) {
+            return "<html><head>" + STYLE + "</head><body><div class='container'>" +
+                    "<h2 style='color:red;'>⚠ Bill available only after Check-Out</h2>" +
+                    "<a class='btn btn-dark' href='/customer/dashboard?hotel=" + r.getHotel() + "'>Back</a>" +
+                    "</div></body></html>";
+        }*/
+
         double total = r.getPrice();
         if (r.isBreakfast())
             total += 500;
 
         return "<html><head>" + STYLE + "</head><body><div class='container'>" +
-                "<h2>Bill Details</h2>" +
+                "<h2>Final Bill</h2>" +
                 "<p>Name: " + r.getCustomerName() + "</p>" +
                 "<p>Room: " + r.getType() + "</p>" +
                 "<p>Base Price: ₹" + r.getPrice() + "</p>" +
@@ -241,55 +273,109 @@ public class LoginController {
 
                 ("PENDING".equalsIgnoreCase(r.getPaymentStatus())
                         ? "<a class='btn btn-success' href='/customer/pay?id=" + r.getId() + "'>Pay Now</a>"
-                        : "")
+                        : "<a class='btn btn-success' href='/customer/finish?id=" + r.getId()
+                                + "'>Finish / Go Home</a>")
                 +
 
-                "<br><a class='btn btn-dark back-btn' href='/'>Back</a>" +
+                "<br><a class='btn btn-dark back-btn' href='/'>Home</a>" +
                 "</div></body></html>";
     }
 
+    @GetMapping("/customer/select-checkout")
+@ResponseBody
+public String selectCheckout(@RequestParam String hotel) {
+
+    List<Room> rooms = roomRepo.findByHotel(hotel);
+
+    String html = "<html><head>" + STYLE + "</head><body><div class='container'>";
+    html += "<h2>Select Room for Check-Out</h2>";
+
+    for (Room r : rooms) {
+        if (!r.isAvailable()) {
+
+            html += "<div class='card'>" +
+                    "<p><b>Room:</b> " + r.getRoomNumber() + "</p>" +
+                    "<p><b>Guest:</b> " + r.getCustomerName() + "</p>" +
+
+                    "<a class='btn btn-danger' href='/customer/checkout?id=" + r.getId() + "'>Check-Out</a>" +
+
+                    "</div>";
+        }
+    }
+
+    html += "<br><a class='btn btn-dark' href='/customer/dashboard?hotel=" + hotel + "'>Back</a>";
+    html += "</div></body></html>";
+
+    return html;
+}
+
     @GetMapping("/customer/pay")
     public RedirectView pay(@RequestParam Long id) {
+
         Room r = roomRepo.findById(id).orElse(null);
+
         if (r != null) {
             r.setPaymentStatus("PAID");
+
             roomRepo.save(r);
         }
+
         return new RedirectView("/customer/bill?id=" + id);
     }
 
-    // ===================== CHECK-IN / CHECK-OUT =====================
-    @GetMapping("/customer/checkin")
-    public RedirectView checkin(@RequestParam Long id) {
-        Room r = roomRepo.findById(id).orElse(null);
-        if (r != null) {
-            r.setCheckedIn(true);
-            roomRepo.save(r);
-            return new RedirectView("/customer/dashboard?hotel=" + r.getHotel());
-        }
-        return new RedirectView("/");
-    }
+    @GetMapping("/customer/finish")
+    public RedirectView finish(@RequestParam Long id) {
 
-    @GetMapping("/customer/checkout")
-    public RedirectView customerCheckout(@RequestParam Long id) {
         Room r = roomRepo.findById(id).orElse(null);
-        if (r != null) {
-            r.setCheckedOut(true);
-            r.setAvailable(true);
 
-            // RESET DATA
+        if (r != null) {
             r.setCustomerName(null);
             r.setPhone(null);
             r.setAadhaar(null);
             r.setBreakfast(false);
             r.setPaymentStatus(null);
             r.setCheckedIn(false);
+            r.setCheckedOut(false);
+            r.setAvailable(true);
 
             roomRepo.save(r);
-            return new RedirectView("/customer/dashboard?hotel=" + r.getHotel());
         }
+
         return new RedirectView("/");
     }
+
+    // ===================== CHECK-IN / CHECK-OUT =====================
+    /*@GetMapping("/customer/checkin")
+    public RedirectView checkin(@RequestParam Long id) {
+
+        Room r = roomRepo.findById(id).orElse(null);
+
+        if (r != null && r.getCustomerName() != null) {
+            r.setCheckedIn(true);
+            roomRepo.save(r);
+
+            return new RedirectView("/customer/dashboard?hotel=" + r.getHotel());
+        }
+
+        return new RedirectView("/");
+    }*/
+
+    @GetMapping("/customer/checkout")
+public RedirectView customerCheckout(@RequestParam Long id) {
+
+    Room r = roomRepo.findById(id).orElse(null);
+
+    if (r != null) {
+        r.setCheckedOut(true);
+        r.setAvailable(true);
+
+        roomRepo.save(r);
+
+        return new RedirectView("/customer/bill?id=" + id);
+    }
+
+    return new RedirectView("/");
+}
 
     // ===================== FEEDBACK =====================
     @GetMapping("/customer/feedback")
@@ -315,7 +401,11 @@ public class LoginController {
         }
 
         return new RedirectView("/");
-    }
+
+        // ===================== FEEDBACKS =====================
+
+}
+    
 
     // ===================== FACILITIES =====================
     @GetMapping("/customer/facilities")
@@ -370,49 +460,130 @@ public class LoginController {
         return "Invalid Login";
     }
 
-    // ===================== ADMIN =====================
     @GetMapping("/admin/dashboard")
-    @ResponseBody
-    public String adminDash(HttpSession session) {
+@ResponseBody
+public String adminDash(HttpSession session) {
 
-        User u = (User) session.getAttribute("user");
-        if (u == null)
-            return "Access Denied";
+    User u = (User) session.getAttribute("user");
+    if (u == null)
+        return "Access Denied";
 
-        List<Room> rooms = roomRepo.findByHotel(u.getHotel());
+    List<Room> rooms = roomRepo.findByHotel(u.getHotel());
 
-        String html = "<html><head>" + STYLE + "</head><body><div class='container'>";
-        html += "<h1>" + u.getHotel() + " Admin</h1>";
+    String html = "<html><head>" + STYLE + "</head><body><div class='container'>";
 
-        html += "<a class='btn btn-success' href='/admin/add-room-form'>Add Room</a>";
-        html += "<a class='btn btn-dark' href='/logout'>Logout</a><br><br>";
+    html += "<h1>" + u.getHotel() + " Admin</h1>";
 
-        for (Room r : rooms) {
+    // ✅ ADD ROOM + LOGOUT (BOTH WORKING)
+    html += "<a class='btn btn-success' href='/admin/add-room-form'>Add Room</a> ";
+    html += "<a class='btn btn-dark' href='/logout'>Logout</a><br><br>";
 
-            String status = r.isAvailable() ? "Available ✅" : "Occupied ❌";
+    // ===================== ROOM LIST =====================
+    html += "<h2>🏨 Rooms</h2>";
 
-            html += "<p>" +
-                    r.getRoomNumber() + " - " + r.getType() +
-                    " (" + status + ")" +
+    for (Room r : rooms) {
 
-                    (!r.isAvailable()
-                            ? " <a class='btn btn-danger' href='/admin/check-out?id=" + r.getId() + "'>Check-out</a>"
-                            : "")
-                    +
+        String status = r.isAvailable() ? "Available ✅" : "Occupied ❌";
 
-                    "</p>";
+        html += "<p>" +
+                "<b>" + r.getRoomNumber() + "</b> - " + r.getType() +
+                " (" + status + ") ";
+
+        if (!r.isAvailable()) {
+            html += "<a class='btn btn-danger' href='/admin/check-out?id=" + r.getId() + "'>Check-out</a> ";
         }
 
-        return html + "</div></body></html>";
+        html += "<a class='btn btn-danger' href='/admin/delete-room?id=" + r.getId() + "'>Delete</a>" +
+                "</p>";
     }
+
+    // ===================== CURRENT GUESTS =====================
+    html += "<hr><h2>👥 Current Guests</h2>";
+
+    boolean hasGuests = false;
+
+    for (Room r : rooms) {
+        if (!r.isAvailable()) {
+
+            hasGuests = true;
+
+            html += "<div class='card'>" +
+                    "<p><b>Name:</b> " + r.getCustomerName() + "</p>" +
+                    "<p><b>Room No:</b> " + r.getRoomNumber() + "</p>" +
+                    "<p><b>Type:</b> " + r.getType() + "</p>" +
+                    "<p><b>Phone:</b> " + r.getPhone() + "</p>" +
+                    "<p><b>Check-In:</b> " + (r.isCheckedIn() ? "Yes ✅" : "No ❌") + "</p>" +
+                    "<a class='btn btn-danger' href='/admin/check-out?id=" + r.getId() + "'>Force Check-Out</a>" +
+                    "</div>";
+        }
+    }
+
+    if (!hasGuests) {
+        html += "<p>No current guests</p>";
+    }
+
+    // ===================== FEEDBACK =====================
+    html += "<hr><h2>⭐ Customer Feedbacks</h2>";
+
+    boolean hasFeedback = false;
+
+    for (Room r : rooms) {
+        if (r.getFeedback() != null && !r.getFeedback().isEmpty()) {
+
+            hasFeedback = true;
+
+            html += "<div class='card'>" +
+                    "<p><b>Room:</b> " + r.getRoomNumber() + "</p>" +
+                    "<p><b>Name:</b> " + r.getCustomerName() + "</p>" +
+                    "<p><b>Feedback:</b> " + r.getFeedback() + "</p>" +
+                    "</div>";
+        }
+    }
+
+    if (!hasFeedback) {
+        html += "<p>No feedback available</p>";
+    }
+
+    return html + "</div></body></html>";
+}
+
+   @GetMapping("/admin/delete-room")
+public RedirectView deleteRoom(@RequestParam Long id, HttpSession session) {
+
+    User u = (User) session.getAttribute("user");
+    if (u == null)
+        return new RedirectView("/");
+
+    Room r = roomRepo.findById(id).orElse(null);
+
+    if (r != null) {
+        roomRepo.delete(r);
+    }
+
+    return new RedirectView("/admin/dashboard");
+}
+
 
     @GetMapping("/admin/check-out")
     public RedirectView checkout(@RequestParam Long id) {
+
         Room r = roomRepo.findById(id).orElse(null);
+
         if (r != null) {
             r.setAvailable(true);
+            r.setCheckedOut(true);
+
+            // reset data
+            r.setCustomerName(null);
+            r.setPhone(null);
+            r.setAadhaar(null);
+            r.setBreakfast(false);
+            r.setPaymentStatus(null);
+            r.setCheckedIn(false);
+
             roomRepo.save(r);
         }
+
         return new RedirectView("/admin/dashboard");
     }
 
@@ -446,7 +617,7 @@ public class LoginController {
         Room r = new Room();
         r.setRoomNumber(roomNumber);
         r.setType(type);
-        r.setPrice(6000 + random.nextInt(8000));
+        r.setPrice(1000 + random.nextInt(8000));
         r.setAvailable(true);
         r.setHotel(u.getHotel());
 
@@ -461,4 +632,6 @@ public class LoginController {
         session.invalidate();
         return new RedirectView("/");
     }
+
 }
+            
